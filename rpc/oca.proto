@@ -1,0 +1,56 @@
+// Copyright 2018, OpenCensus Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package rpc;
+
+import "trace.proto";
+option java_multiple_files = true;
+option java_package = "io.opencensus.proto.agent.trace";
+option java_outer_classname = "AgentTraceProto";
+
+message ConfigRequest {
+    double sampling_rate = 1;
+}
+
+message Identifier {
+    int64 pid           = 1;
+    string hostname     = 2;
+    double start_time   = 3;
+    map<string, string> attributes = 4;
+}
+
+message ConfigResponse {
+    double sampling_rate  = 1;
+    double ack_time_epoch = 2;
+    Identifier identifier = 3;
+}
+
+message Traces {
+    Identifier identifier = 1;
+    repeated opencensus.proto.trace.Span Spans = 2;
+}
+
+message Nothing {}
+
+service TraceService {
+    // PushConfig is initiated by the agent to the client and
+    // ConfigRequest is the configuration that the agent asks the
+    // client to use
+    rpc PushConfig(stream ConfigResponse) returns (stream ConfigRequest){};
+
+    // ExportTraces is a unidirectional streamer from a client to the agent
+    rpc ExportTraces(stream Traces) returns (Nothing) {};
+}
